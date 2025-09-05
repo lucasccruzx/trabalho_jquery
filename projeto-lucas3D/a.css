@@ -1,0 +1,247 @@
+/* Reset e configurações básicas */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+#main {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+#geral {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* Header */
+#header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+}
+
+#header h1 {
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin: 0;
+}
+
+/* Formulário */
+#formulario_mural {
+    background: #f8f9fa;
+    padding: 30px;
+    border-bottom: 3px solid #e9ecef;
+}
+
+#mural {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#mural label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+#mural input[type="text"],
+#mural textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 1em;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease;
+}
+
+#mural input[type="text"]:focus,
+#mural textarea:focus {
+    outline: none;
+    border-color: #4facfe;
+    box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+}
+
+#mural textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.btn {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Estilização de erros do jQuery Validate */
+label.error {
+    color: #dc3545;
+    font-size: 0.9em;
+    margin-top: -15px;
+    margin-bottom: 15px;
+    display: block;
+    font-weight: normal;
+}
+
+input.error,
+textarea.error {
+    border-color: #dc3545 !important;
+    background-color: #fff5f5;
+}
+
+/* Lista de componentes */
+.componentes {
+    background: white;
+    margin: 20px;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #4facfe;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.componentes:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.componentes li {
+    list-style: none;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.componentes li:last-child {
+    border-bottom: none;
+}
+
+.componentes strong {
+    color: #4facfe;
+    min-width: 80px;
+    display: inline-block;
+}
+
+/* Footer */
+#footer {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    #header h1 {
+        font-size: 2em;
+    }
+    
+    #formulario_mural {
+        padding: 20px;
+    }
+    
+    .componentes {
+        margin: 10px;
+        padding: 20px;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    #header {
+        padding: 20px 15px;
+    }
+    
+    #header h1 {
+        font-size: 1.8em;
+    }
+    
+    #formulario_mural {
+        padding: 15px;
+    }
+    
+    .componentes {
+        margin: 5px;
+        padding: 15px;
+    }
+    
+    #mural input[type="text"],
+    #mural textarea {
+        padding: 10px;
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.componentes {
+    animation: fadeIn 0.6s ease;
+}
+
+/* Scroll personalizado */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #3a8fd4 0%, #00c9d4 100%);
+}

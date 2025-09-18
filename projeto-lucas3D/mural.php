@@ -1,14 +1,63 @@
 <?php
 include "conexao.php";
 
-// Inserir novo pedido/recado
-if(isset($_POST['cadastra'])){
-    $nome  = mysqli_real_escape_string($conexao, $_POST['nome']);
-    $email = mysqli_real_escape_string($conexao, $_POST['email']);
-    $msg   = mysqli_real_escape_string($conexao, $_POST['msg']);
+// Configurações do Cloudinary (certifique-se de que estas variáveis estão definidas em conexao.php)
+// $cloud_name, $api_key, $api_secret
 
-    $sql = "INSERT INTO componentes (nome, email, mensagem) VALUES ('$nome', '$email', '$msg')";
-    mysqli_query($conexao, $sql) or die("Erro ao inserir dados: " . mysqli_error($conexao));
+// Inserir novo produto
+if(isset($_POST['cadastra'])){
+    // Pegando os dados do formulário (tratamento contra SQL Injection)
+    $nome = mysqli_real_escape_string($conexao, $_POST['nome']);
+    $descricao = mysqli_real_escape_string($conexao, $_POST['descricao']);
+    $preco = floatval($_POST['preco']);
+    $imagem_url = ""; // Inicializa a variável que vai guardar a URL da imagem
+    
+    // --------------------------
+    // Upload da imagem para Cloudinary
+    // --------------------------
+    if(isset($_FILES['imagem']) && $_FILES['imagem']['error'] == 0){
+        $cfile = new CURLFile($_FILES['imagem']['tmp_name'], $_FILES['imagem']['type'], $_FILES['imagem']['name']);
+
+        $timestamp = time();
+        $string_to_sign = "timestamp=$timestamp$api_secret";
+        $signature = sha1($string_to_sign);
+
+        $data = [
+            'file' => $cfile,
+            'timestamp' => $timestamp,
+            'api_key' => $api_key,
+            'signature' => $signature
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://api.cloudinary.com/v1_1/$cloud_name/image/upload");
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+        if($response === false){ die("Erro no cURL: " . curl_error($ch)); }
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+        if(isset($result['secure_url'])){
+            $imagem_url = $result['secure_url'];
+        } else {
+            die("Erro no upload: " . print_r($result, true));
+        }
+    }
+
+    // ==========================
+    // Inserindo no banco de dados
+    // ==========================
+    if($imagem_url != ""){
+        // ATENÇÃO: Altere 'produtos' para o nome da sua tabela
+        $sql = "INSERT INTO produtos (nome, descricao, preco, imagem_url) VALUES ('$nome', '$descricao', $preco, '$imagem_url')";
+        mysqli_query($conexao, $sql) or die("Erro ao inserir: " . mysqli_error($conexao));
+    }
+
+    // ==========================
+    // REDIRECIONAMENTO
+    // ==========================
     header("Location: mural.php");
     exit;
 }
@@ -17,7 +66,7 @@ if(isset($_POST['cadastra'])){
 <html lang="pt-br">
 <head>
 <meta charset="utf-8"/>
-<title>Mural de pedidos - Twitter Style</title>
+<title>Mural de Produtos - Twitter Style</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="scripts/jquery.js"></script>
 <script src="scripts/jquery.validate.js"></script>
@@ -128,7 +177,7 @@ body {
     font-weight: 700;
 }
 
-/* Formulário de tweet */
+/* Formulário de produto */
 #formulario_mural {
     padding: 15px 20px;
     border-bottom: 1px solid #2f3336;
@@ -140,10 +189,13 @@ body {
 }
 
 #mural label {
-    display: none;
+    color: #71767b;
+    margin-bottom: 5px;
+    font-size: 14px;
 }
 
 #mural input[type="text"],
+#mural input[type="number"],
 #mural textarea {
     background-color: transparent;
     border: none;
@@ -154,11 +206,19 @@ body {
     outline: none;
     width: 100%;
     border-bottom: 1px solid #2f3336;
+    margin-bottom: 15px;
 }
 
 #mural textarea {
     min-height: 120px;
     border-bottom: none;
+}
+
+#mural input[type="file"] {
+    background-color: transparent;
+    color: #e7e9ea;
+    padding: 10px 0;
+    margin-bottom: 15px;
 }
 
 .tweet-actions {
@@ -200,15 +260,14 @@ body {
     cursor: default;
 }
 
-/* Lista de tweets */
-.componentes {
+/* Lista de produtos */
+.produtos {
     padding: 15px 20px;
     border-bottom: 1px solid #2f3336;
-    display: flex;
     transition: background-color 0.2s;
 }
 
-.componentes:hover {
+.produtos:hover {
     background-color: #080808;
 }
 
@@ -226,58 +285,62 @@ body {
     font-weight: bold;
 }
 
-.tweet-content {
+.produto-content {
     flex: 1;
 }
 
-.tweet-header {
+.produto-header {
     display: flex;
     align-items: center;
     margin-bottom: 5px;
 }
 
-.tweet-author {
+.produto-nome {
     font-weight: 700;
     margin-right: 5px;
 }
 
-.tweet-handle, .tweet-time {
-    color: #71767b;
-    margin-right: 5px;
+.produto-preco {
+    color: #1d9bf0;
+    font-weight: 700;
+    margin-left: 10px;
 }
 
-.tweet-dot {
-    color: #71767b;
-    margin: 0 5px;
-}
-
-.tweet-text {
+.produto-descricao {
     font-size: 16px;
     line-height: 1.5;
     margin-bottom: 10px;
 }
 
-.tweet-actions-footer {
+.produto-imagem {
+    width: 100%;
+    border-radius: 15px;
+    margin: 10px 0;
+    max-height: 350px;
+    object-fit: cover;
+}
+
+.produto-actions-footer {
     display: flex;
     justify-content: space-between;
     max-width: 80%;
     color: #71767b;
 }
 
-.tweet-action {
+.produto-action {
     display: flex;
     align-items: center;
     cursor: pointer;
 }
 
-.tweet-action i {
+.produto-action i {
     margin-right: 5px;
     padding: 8px;
     border-radius: 50%;
     transition: background-color 0.2s, color 0.2s;
 }
 
-.tweet-action:hover i {
+.produto-action:hover i {
     background-color: rgba(29, 155, 240, 0.1);
     color: #1d9bf0;
 }
@@ -471,17 +534,17 @@ $(document).ready(function() {
     $("#mural").validate({
         rules: {
             nome: { required: true, minlength: 4 },
-            email: { required: true, email: true },
-            msg: { required: true, minlength: 10 }
+            descricao: { required: true, minlength: 10 },
+            preco: { required: true, number: true, min: 0.01 }
         },
         messages: {
-            nome: { required: "Digite o seu nome", minlength: "O nome deve ter no mínimo 4 caracteres" },
-            email: { required: "Digite o seu e-mail", email: "Digite um e-mail válido" },
-            msg: { required: "Digite sua mensagem", minlength: "A mensagem deve ter no mínimo 10 caracteres" }
+            nome: { required: "Digite o nome do produto", minlength: "O nome deve ter no mínimo 4 caracteres" },
+            descricao: { required: "Digite a descrição do produto", minlength: "A descrição deve ter no mínimo 10 caracteres" },
+            preco: { required: "Digite o preço do produto", number: "Digite um valor numérico válido", min: "O preço deve ser maior que zero" }
         }
     });
 
-    // Contador de caracteres
+    // Contador de caracteres para descrição
     $('textarea').on('input', function() {
         const maxLength = 280;
         const currentLength = $(this).val().length;
@@ -512,8 +575,8 @@ $(document).ready(function() {
             <span>Página Inicial</span>
         </div>
         <div class="menu-item">
-            <i class="fas fa-search"></i>
-            <span>Explorar</span>
+            <i class="fas fa-shopping-cart"></i>
+            <span>Produtos</span>
         </div>
         <div class="menu-item">
             <i class="fas fa-bell"></i>
@@ -543,51 +606,66 @@ $(document).ready(function() {
 
     <div id="geral">
         <div id="header">
-            <h1>Página Inicial</h1>
+            <h1>Mural de Produtos</h1>
         </div>
 
         <div id="formulario_mural">
-            <form id="mural" method="post">
-                <input type="text" name="nome" placeholder="Seu nome"/><br/>
-                <input type="text" name="email" placeholder="Seu e-mail"/><br/>
-                <textarea name="msg" placeholder="O que está acontecendo?"></textarea>
+            <form id="mural" method="post" enctype="multipart/form-data">
+                <label>Nome do produto:</label>
+                <input type="text" name="nome" placeholder="Nome do produto"/>
+                
+                <label>Descrição:</label>
+                <textarea name="descricao" placeholder="Descreva o produto"></textarea>
+                
+                <label>Preço (R$):</label>
+                <input type="number" step="0.01" name="preco" placeholder="0.00"/>
+                
+                <label>Imagem do produto:</label>
+                <input type="file" name="imagem" accept="image/*"/>
+                
                 <div class="tweet-actions">
                     <div class="tweet-icons">
                         <i class="far fa-image"></i>
-                        <i class="fas fa-poll"></i>
+                        <i class="fas fa-tag"></i>
                         <i class="far fa-smile"></i>
-                        <i class="far fa-calendar"></i>
-                        <i class="fas fa-map-marker-alt"></i>
                     </div>
                     <div>
                         <span class="char-count" style="color: #71767b;">280</span>
-                        <input type="submit" value="Publicar" name="cadastra" class="btn"/>
+                        <input type="submit" value="Publicar Produto" name="cadastra" class="btn"/>
                     </div>
                 </div>
             </form>
         </div>
 
         <?php
-        $seleciona = mysqli_query($conexao, "SELECT * FROM componentes ORDER BY id DESC");
+        // ATENÇÃO: Altere 'produtos' para o nome da sua tabela
+        $seleciona = mysqli_query($conexao, "SELECT * FROM produtos ORDER BY id DESC");
         while($res = mysqli_fetch_assoc($seleciona)){
             $initial = substr($res['nome'], 0, 1);
             $time_ago = "· " . rand(1, 23) . "h";
             
-            echo '<div class="componentes">';
+            echo '<div class="produtos">';
+            echo '<div style="display: flex;">';
             echo '<div class="avatar">' . strtoupper($initial) . '</div>';
-            echo '<div class="tweet-content">';
-            echo '<div class="tweet-header">';
-            echo '<span class="tweet-author">' . htmlspecialchars($res['nome']) . '</span>';
-            echo '<span class="tweet-handle">@' . strtolower(str_replace(' ', '', htmlspecialchars($res['nome']))) . '</span>';
+            echo '<div class="produto-content">';
+            echo '<div class="produto-header">';
+            echo '<span class="produto-nome">' . htmlspecialchars($res['nome']) . '</span>';
+            echo '<span class="produto-preco">R$ ' . number_format($res['preco'], 2, ',', '.') . '</span>';
             echo '<span class="tweet-dot">·</span>';
             echo '<span class="tweet-time">' . $time_ago . '</span>';
             echo '</div>';
-            echo '<div class="tweet-text">' . nl2br(htmlspecialchars($res['mensagem'])) . '</div>';
-            echo '<div class="tweet-actions-footer">';
-            echo '<div class="tweet-action"><i class="far fa-comment"></i><span>' . rand(1, 50) . '</span></div>';
-            echo '<div class="tweet-action"><i class="fas fa-retweet"></i><span>' . rand(1, 30) . '</span></div>';
-            echo '<div class="tweet-action"><i class="far fa-heart"></i><span>' . rand(1, 100) . '</span></div>';
-            echo '<div class="tweet-action"><i class="fas fa-share"></i></div>';
+            echo '<div class="produto-descricao">' . nl2br(htmlspecialchars($res['descricao'])) . '</div>';
+            
+            if (!empty($res['imagem_url'])) {
+                echo '<img src="' . htmlspecialchars($res['imagem_url']) . '" alt="' . htmlspecialchars($res['nome']) . '" class="produto-imagem">';
+            }
+            
+            echo '<div class="produto-actions-footer">';
+            echo '<div class="produto-action"><i class="far fa-comment"></i><span>' . rand(1, 50) . '</span></div>';
+            echo '<div class="produto-action"><i class="fas fa-shopping-cart"></i><span>Comprar</span></div>';
+            echo '<div class="produto-action"><i class="far fa-heart"></i><span>' . rand(1, 100) . '</span></div>';
+            echo '<div class="produto-action"><i class="fas fa-share"></i></div>';
+            echo '</div>';
             echo '</div>';
             echo '</div>';
             echo '</div>';
@@ -595,7 +673,7 @@ $(document).ready(function() {
         ?>
 
         <div id="footer">
-            <p>Mural de Pedidos - Estilo Twitter © 2023</p>
+            <p>Mural de Produtos - Estilo Twitter © 2023</p>
         </div>
     </div>
 
@@ -603,46 +681,46 @@ $(document).ready(function() {
     <div class="right-sidebar">
         <div class="search-container">
             <i class="fas fa-search" style="color: #71767b; margin-right: 10px;"></i>
-            <input type="text" placeholder="Buscar no Mural">
+            <input type="text" placeholder="Buscar produtos">
         </div>
 
         <div class="trends-container">
-            <div class="trends-header">O que está happening</div>
+            <div class="trends-header">Produtos em Destaque</div>
             <div class="trend-item">
-                <div class="trend-category">Tendência em Brasil</div>
-                <div class="trend-name">#MuralDePedidos</div>
-                <div class="trend-tweets">5.218 Tweets</div>
+                <div class="trend-category">Tendência em Eletrônicos</div>
+                <div class="trend-name">#Smartphones</div>
+                <div class="trend-tweets">5.218 Produtos</div>
             </div>
             <div class="trend-item">
-                <div class="trend-category">Tendência em Tecnologia</div>
-                <div class="trend-name">PHP 8</div>
-                <div class="trend-tweets">12.4K Tweets</div>
+                <div class="trend-category">Tendência em Moda</div>
+                <div class="trend-name">Roupas de Verão</div>
+                <div class="trend-tweets">12.4K Produtos</div>
             </div>
             <div class="trend-item">
-                <div class="trend-category">Tendência em Design</div>
-                <div class="trend-name">UI/UX</div>
-                <div class="trend-tweets">23.5K Tweets</div>
+                <div class="trend-category">Tendência em Casa</div>
+                <div class="trend-name">Decoração</div>
+                <div class="trend-tweets">23.5K Produtos</div>
             </div>
         </div>
 
         <div class="who-to-follow">
-            <div class="who-to-follow-header">Quem seguir</div>
+            <div class="who-to-follow-header">Lojas em Destaque</div>
             <div class="follow-item">
                 <div class="follow-profile">
-                    <div class="follow-avatar">D</div>
+                    <div class="follow-avatar">T</div>
                     <div class="follow-info">
-                        <div class="follow-name">Desenvolvedor PHP</div>
-                        <div class="follow-handle">@phpdev</div>
+                        <div class="follow-name">Tech Store</div>
+                        <div class="follow-handle">@techstore</div>
                     </div>
                     <button class="follow-btn">Seguir</button>
                 </div>
             </div>
             <div class="follow-item">
                 <div class="follow-profile">
-                    <div class="follow-avatar">W</div>
+                    <div class="follow-avatar">F</div>
                     <div class="follow-info">
-                        <div class="follow-name">Web Designer</div>
-                        <div class="follow-handle">@webdesign</div>
+                        <div class="follow-name">Fashion Shop</div>
+                        <div class="follow-handle">@fashionshop</div>
                     </div>
                     <button class="follow-btn">Seguir</button>
                 </div>

@@ -13,7 +13,7 @@
 
 # Dumping database structure for mural
 DROP DATABASE IF EXISTS `mural`;
-CREATE DATABASE IF NOT EXISTS `mural` /*!40100 DEFAULT CHARACTER SET latin1 */;
+CREATE DATABASE IF NOT EXISTS `mural` /*!40100 DEFAULT CHARACTER SET utf8 */;
 USE `mural`;
 
 
@@ -25,12 +25,28 @@ CREATE TABLE IF NOT EXISTS `recados` (
   `email` varchar(50) DEFAULT NULL,
   `mensagem` text,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 # Dumping data for table mural.recados: 0 rows
 DELETE FROM `recados`;
 /*!40000 ALTER TABLE `recados` DISABLE KEYS */;
 /*!40000 ALTER TABLE `recados` ENABLE KEYS */;
+
+# Dumping structure for table mural.produtos
+DROP TABLE IF EXISTS `produtos`;
+CREATE TABLE IF NOT EXISTS `produtos` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL,
+  `descricao` text NOT NULL,
+  `preco` decimal(10,2) NOT NULL,
+  `imagem_url` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+# Dumping data for table mural.produtos: 0 rows
+DELETE FROM `produtos`;
+/*!40000 ALTER TABLE `produtos` DISABLE KEYS */;
+/*!40000 ALTER TABLE `produtos` ENABLE KEYS */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
